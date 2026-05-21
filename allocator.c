@@ -1,4 +1,4 @@
-#include <allocator.h>
+#include "allocator.h"
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -6,14 +6,14 @@ typedef struct alloc_block {
   size_t size;
   bool free;
   struct alloc_block *next;
-} alloc_block;
+} alloc_block_t;
 
 void *HEAP = NULL;
 size_t HEAP_USED = 0;
 size_t HEAP_SIZE = 0;
 
-alloc_block *HEAP_HEAD = NULL;
-alloc_block *HEAP_TAIL = NULL;
+alloc_block_t *HEAP_HEAD = NULL;
+alloc_block_t *HEAP_TAIL = NULL;
 
 void mem_init(void *heap, size_t size) {
   HEAP = heap;
@@ -22,15 +22,15 @@ void mem_init(void *heap, size_t size) {
 
 size_t mem_usage() { return HEAP_USED; }
 
-alloc_block *mem_least_fit(size_t size) {
-  alloc_block *last_cursor = HEAP_HEAD;
-  alloc_block *cursor = HEAP_HEAD;
+alloc_block_t *mem_least_fit(size_t size) {
+  alloc_block_t *last_cursor = HEAP_HEAD;
+  alloc_block_t *cursor = HEAP_HEAD;
 
-  alloc_block *least_fit = NULL;
+  alloc_block_t *least_fit = NULL;
 
   size_t used = 0;
   while (cursor != NULL) {
-    used += sizeof(alloc_block) + cursor->size;
+    used += sizeof(alloc_block_t) + cursor->size;
 
     if (cursor->free && cursor->size >= size) {
       if (least_fit == NULL || cursor->size < least_fit->size) {
@@ -58,8 +58,8 @@ alloc_block *mem_least_fit(size_t size) {
 }
 
 void *mem_init_head(size_t size) {
-  HEAP_HEAD = (alloc_block *)HEAP;
-  *HEAP_HEAD = (alloc_block){
+  HEAP_HEAD = (alloc_block_t *)HEAP;
+  *HEAP_HEAD = (alloc_block_t){
       .size = size,
       .free = false,
       .next = NULL,
@@ -72,18 +72,18 @@ void *mem_init_head(size_t size) {
 }
 
 void *mem_create(size_t size) {
-  HEAP_TAIL->next = (void *)HEAP_TAIL + sizeof(alloc_block) + HEAP_TAIL->size;
+  HEAP_TAIL->next = (void *)HEAP_TAIL + sizeof(alloc_block_t) + HEAP_TAIL->size;
   HEAP_TAIL = HEAP_TAIL->next;
 
-  *HEAP_TAIL = (alloc_block){
+  *HEAP_TAIL = (alloc_block_t){
       .free = false,
       .size = size,
       .next = NULL,
   };
 
-  HEAP_USED += size + sizeof(alloc_block);
+  HEAP_USED += size + sizeof(alloc_block_t);
 
-  return (void *)HEAP_TAIL + sizeof(alloc_block);
+  return (void *)HEAP_TAIL + sizeof(alloc_block_t);
 }
 
 void *malloc(size_t size) {
@@ -99,7 +99,7 @@ void *malloc(size_t size) {
     return mem_init_head(size);
   }
 
-  alloc_block *found = mem_least_fit(size);
+  alloc_block_t *found = mem_least_fit(size);
   if (found == NULL) {
     if (HEAP_USED + size >= HEAP_SIZE) {
       return NULL;
@@ -107,12 +107,12 @@ void *malloc(size_t size) {
     return mem_create(size);
   } else {
     found->free = false;
-    return (void *)found + sizeof(alloc_block);
+    return (void *)found + sizeof(alloc_block_t);
   }
 }
 
 void *realloc(void *ptr, size_t size) {
-  alloc_block *block = ptr - sizeof(alloc_block);
+  alloc_block_t *block = ptr - sizeof(alloc_block_t);
   if (block->size >= size) {
     return ptr;
   }
@@ -132,6 +132,6 @@ void *realloc(void *ptr, size_t size) {
 }
 
 void free(void *ptr) {
-  alloc_block *block = ptr - sizeof(alloc_block);
+  alloc_block_t *block = ptr - sizeof(alloc_block_t);
   block->free = true;
 }
